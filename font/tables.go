@@ -25,3 +25,23 @@ func (f *Font) Head() (*t.HeadTable, error) {
 	}
 	return f.head, nil
 }
+
+func (f *Font) Name() (*t.NameTable, error) {
+
+	offset, exists := f.tableOffsets["name"]
+	if !exists {
+		return nil, errors.New("Table \"name\" does not exists in the current font file.")
+	}
+
+	if f.name == nil {
+		name, err := t.ReadNameTable(f.file, offset)
+
+		if err != nil {
+			return nil, err
+		}
+
+		f.name = name
+
+	}
+	return f.name, nil
+}

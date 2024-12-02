@@ -9,8 +9,6 @@ import (
 
 // The representation of the structure of a TrueType (TTF) or OpenType (OTF) font file.
 //
-// This implementation falls under Apple's TTF specification, and Microsoft's OTF specification.
-//
 // This low level API allows for direct reading/manipulation of font data.
 type FontHeader struct {
 	// Represents the structure of the font offset subtable.

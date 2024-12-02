@@ -2,34 +2,24 @@ package tables
 
 import (
 	"encoding/binary"
+	"errors"
 	"os"
 )
 
-var (
-	CopyrightNoticeID  = 0
-	FontFamilyID       = 1
-	FontSubfamilyID    = 2
-	UniqueSubfamilyID  = 3
-	FullNameID         = 4
-	VersionNameTableID = 5
-	PostScriptNameID   = 6
-	TrademarkNoticeID  = 7
-)
-
 type NameTable struct {
-	Format       uint16
-	Count        uint16
-	StringOffset uint16
-	NameRecords  []NameRecord
-	Name         []byte
+	Format       uint16       `json:"format"`
+	Count        uint16       `json:"count"`
+	StringOffset uint16       `json:"string_offset"`
+	NameRecords  []NameRecord `json:"name_records"`
+	Name         []byte       `json:"name"`
 }
 
 type NameRecord struct {
-	PlatformID         uint16
-	PlatformSpecificID uint16
-	LanguageID         uint16
-	NameID             uint16
-	Length             uint16
+	PlatformId         uint16 `json:"platform_id"`
+	PlatformSpecificId uint16 `json:"platform_specific_id"`
+	LanguageId         uint16 `json:"language_id"`
+	NameId             uint16 `json:"name_id"`
+	Length             uint16 `json:"length"`
 	Offset             uint16
 }
 
@@ -39,14 +29,20 @@ func ReadNameTable(file *os.File, offset uint32) (*NameTable, error) {
 
 	_, err := file.Seek(int64(offset), 0)
 	if err != nil {
-		panic(err)
+		return nil, errors.New("Cannot seek to name table offset")
 	}
 
 	err = binary.Read(file, binary.BigEndian, &name.Format)
+	if err != nil {
+		return nil, errors.New("Error seeking to name table offset")
+	}
 	err = binary.Read(file, binary.BigEndian, &name.Count)
+	if err != nil {
+		return nil, errors.New("Cannot read name table subtable count")
+	}
 	err = binary.Read(file, binary.BigEndian, &name.StringOffset)
 	if err != nil {
-		panic(err)
+		return nil, errors.New("Cannot read name table string offset")
 	}
 
 	name.NameRecords = make([]NameRecord, name.Count)
@@ -65,28 +61,14 @@ func ReadNameTable(file *os.File, offset uint32) (*NameTable, error) {
 
 	_, err = file.Seek(int64(offset)+int64(name.StringOffset), 0)
 	if err != nil {
-		panic(err)
+		return nil, errors.New("Error seeking into one of the name table records's offset")
 	}
 
 	name.Name = make([]byte, stringSize)
 	_, err = file.Read(name.Name)
 	if err != nil {
-		panic(err)
+		return nil, errors.New("Cannot read one of the name table records")
 	}
 
 	return name, nil
-
-}
-
-// This function returns the given name as string
-//
-// This is commented because this ain't gotta be here but i want to keep the implementation
-func (n NameTable) getName(nameID int) string {
-
-	for _, record := range n.NameRecords {
-		if int64(record.NameID) == int64(nameID) {
-			return string(n.Name[record.Offset : record.Offset+record.Length])
-		}
-	}
-	return ""
 }

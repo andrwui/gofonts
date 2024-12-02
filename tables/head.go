@@ -34,7 +34,7 @@ func ReadHeadTable(file *os.File, offset uint32) (*HeadTable, error) {
 	_, err := file.Seek(int64(offset), 0)
 	err = binary.Read(file, binary.BigEndian, head)
 	if err != nil {
-		return nil, errors.New("This table does not exists in the current font file.")
+		return nil, errors.New("Could not read head table")
 	}
 
 	return head, nil
